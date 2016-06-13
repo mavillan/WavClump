@@ -500,6 +500,17 @@ class FellWalker:
       if verbose: log.info("[Stage 5] Smoothing boundaries")
       cleanIter = self.par['CLEANITER']
       for i in range(cleanIter):
-         caa,clump = ca.smooth_boundary(caa,clump)
+         _caa = ca.smooth_boundary(caa)
+         
+         #positions where they were changes
+         diff = caa!=_caa
+         if not np.any(diff): del _caa; continue
+         positions = map(tuple,np.array(np.where(diff)))
 
+         #update clump struct
+         for pos in positions:
+            clump[caa[pos]].remove(pos)
+            clump[_caa[pos]].append(pos)
+         del caa
+         caa = _caa
       return (caa,clump)

@@ -74,9 +74,8 @@ def remove_isolate(inp, thresh, on, off, centre):
 *     examined, and the output pixel is assigned the most commonly
 *     occurring input value.
 """
-#@numba.jit('float64[:,:,:] (float64[:,:,:])')
-@numba.jit
-def smooth_boundary(inp, clump):
+@numba.jit('float64[:,:,:] (float64[:,:,:])')
+def smooth_boundary(inp):
    out = np.copy(inp)
    shape = inp.shape
 
@@ -119,7 +118,5 @@ def smooth_boundary(inp, clump):
                    if reached: continue
 
                #assign the winner
-               clump[inp[ox,oy,oz]].remove((ox,oy,oz))
-               clump[winner].append((ox,oy,oz))
                out[ox, oy, oz] = winner
-   return out,clump
+   return out
