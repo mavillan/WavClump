@@ -26,15 +26,15 @@ class FellWalker:
 
       """ Specific FellWalker parameters """
       #Longest jump to a higher neighbouring pixel
-      self.par['MAXJUMP'] = 5
+      self.par['MAXJUMP'] = 6
       #The minimum dip parameter is specified as a multiple of the noise level in the data
       self.par['MINDIP'] = 3
       #Minimum size (in pixels) of clumps
-      self.par['MINSIZE'] = 10
+      self.par['MINSIZE'] = 20
       #Lowest gradient which marks the start of the walk
       self.par['FLATSLOPE'] = 1.
       #Data values less than this are at "sea level"
-      self.par['SEALEVEL'] = 0.
+      self.par['SEALEVEL'] = 1.
 
       """ cellulars automaton parameters """
       #Min fraction of neighbouring good pixels
@@ -501,11 +501,11 @@ class FellWalker:
       cleanIter = self.par['CLEANITER']
       for i in range(cleanIter):
          _caa = ca.smooth_boundary(caa)
-         
+
          #positions where they were changes
          diff = caa!=_caa
          if not np.any(diff): del _caa; continue
-         positions = map(tuple,np.array(np.where(diff)))
+         positions = map(tuple,np.array(np.where(diff)).T)
 
          #update clump struct
          for pos in positions:
