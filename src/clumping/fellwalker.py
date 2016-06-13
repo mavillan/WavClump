@@ -56,12 +56,14 @@ class FellWalker:
       return np.sqrt(ret)
 
    def create_caa(self, data):
-      caa = np.zeros_like(data.data).astype(np.int)
+      caa = np.zeros(data.shape, dtype=np.int)
       #Check invalid pixels (below threshold)
-      rms = self.par["RMS"]
-      threshold = self.par['THRESH']*rms
+      threshold = self.par['THRESH']*self.par["RMS"]
       #Aditionally, NaN valued pixels are set as unusable -> filled(1)
-      mask = np.array((data<threshold).filled(1))
+      if type(data)==np.ma.MaskedArray:
+         mask = np.array((data<threshold).filled(1))
+      else:
+         mask = data<threshold
       caa[mask] = -1
       return caa
 
