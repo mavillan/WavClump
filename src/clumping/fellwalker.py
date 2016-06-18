@@ -484,6 +484,7 @@ class FellWalker:
       for clumpId in clump:
          if clumpId!=seqId:
             clump[seqId]=clump.pop(clumpId)
+            peaks[seqId]=peaks.pop(clumpId)
             #update caa
             for pos in clump[seqId]:
                caa[pos]=seqId
@@ -502,7 +503,7 @@ class FellWalker:
       for i in range(cleanIter):
          _caa = ca.smooth_boundary(caa)
 
-         #positions where they were changes
+         #positions where there were changes
          diff = caa!=_caa
          if not np.any(diff): del _caa; continue
          positions = map(tuple,np.array(np.where(diff)).T)
@@ -513,4 +514,4 @@ class FellWalker:
             clump[_caa[pos]].append(pos)
          del caa
          caa = _caa
-      return (caa,clump)
+      return (caa,clump,peaks)
