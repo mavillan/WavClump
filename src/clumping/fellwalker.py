@@ -133,11 +133,13 @@ class FellWalker:
    """
    return dictionaries peaks and cols of the form:
    peaks={clumpId:peak,...}
+   ppeaks={clumpId:peak position,...}
    cols={clumpId:{neighId:col,...},...}
    """
    def clump_structs(self, clump, data, caa):
       #Initialize peaks ans cols dictionaries
       peaks=dict()
+      ppeaks=dict()
       cols=dict()
       for clumpId in clump:
          cols[clumpId]=dict()
@@ -145,10 +147,12 @@ class FellWalker:
 
       for clumpId,pixels in clump.items():
          peaks[clumpId]=0. #max value in current clump
+         ppeaks[clumpId]=None
          for pos in pixels:
             #First, find the peak of clump
             if data[pos]>peaks[clumpId]:
                peaks[clumpId]=data[pos]
+               ppeaks[clumpId]=pos
             #Second, verify if it is a border clump pixel
             isBorder=False
             for i in range(-1,2):
@@ -182,10 +186,10 @@ class FellWalker:
                         break
                   if isBorder: break
                if isBorder: break
-      return peaks,cols
+      return peaks,ppeaks,cols
 
 
-   def merge(self, clump, peaks, cols, caa, minDip):
+   def merge(self, clump, peaks, ppeaks, cols, caa, minDip):
       """
       Enter an iterative loop in which we join clumps that have a small dip
       between them. Finish when an interation fails to merge any clumps.
@@ -230,9 +234,12 @@ class FellWalker:
                if clumpId in cols[tmpId]:
                   cols[tmpId][neighId]=cols[tmpId].pop(clumpId)
 
-            #delete clumpId from peaks and update new peak of merged clumps
+            #delete clumpId from (peaks,ppeaks) and update new peak of merged clumps
             tmpPeak=peaks.pop(clumpId)
-            peaks[neighId]=max(tmpPeak,peaks[neighId])
+            tmppPeak=ppeaks.pop(clumpId)
+            if tmpPeak > peaks[neighId]:
+            	peaks[neighId] = tmpPeak
+            	ppeaks[neighId] = tmppPeak
 
             #Update caa
             for pos in clump[clumpId]:
@@ -240,7 +247,7 @@ class FellWalker:
 
             #Merge pixels in clump dictionary
             clump[neighId]+=(clump.pop(clumpId))
-      return clump,peaks,cols,caa
+      return clump,peaks,ppeaks,cols,caa
 
 
    def walkup(self, pos, path, pathv, data, caa):
@@ -475,8 +482,8 @@ class FellWalker:
       Create a dictionary structure describing all the clumps boundaries in the
       supplied caa array. Then merge stage is applyed.
       """
-      peaks,cols=self.clump_structs(clump,data,caa)
-      clump,peaks,cols,caa=self.merge(clump,peaks,cols,caa,minDip)
+      peaks,ppeaks,cols=self.clump_structs(clump,data,caa)
+      clump,peaks,ppeaks,cols,caa=self.merge(clump,peaks,ppeaks,cols,caa,minDip)
 
       #ordering clumpId's (sequential id's)
       #verify if ordering is correct
@@ -485,6 +492,7 @@ class FellWalker:
          if clumpId!=seqId:
             clump[seqId]=clump.pop(clumpId)
             peaks[seqId]=peaks.pop(clumpId)
+            ppeaks[seqId]=ppeaks.pop(clumpId)
             #update caa
             for pos in clump[seqId]:
                caa[pos]=seqId
@@ -514,4 +522,4 @@ class FellWalker:
             clump[_caa[pos]].append(pos)
          del caa
          caa = _caa
-      return (caa,clump,peaks)
+      return (caa,clump,ppeaks)
