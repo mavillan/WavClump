@@ -347,8 +347,9 @@ class FellWalker:
       data = copy.deepcopy(data)
 
       # Set the RMS, or automatically find an estimate for it
-      rms = self.estimate_rms(data)
-      self.par['RMS'] = rms
+      if not self.par.has_key('RMS'):
+         rms = self.estimate_rms(data)
+         self.par['RMS'] = rms
 
       """
       Fill the supplied caa array with -1 for all pixels which are below the
