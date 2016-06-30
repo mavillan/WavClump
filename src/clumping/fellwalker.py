@@ -26,7 +26,7 @@ class FellWalker:
 
       """ Specific FellWalker parameters """
       #Longest jump to a higher neighbouring pixel
-      self.par['MAXJUMP'] = 6
+      self.par['MAXJUMP'] = 5
       #The minimum dip parameter is specified as a multiple of the noise level in the data
       self.par['MINDIP'] = 3
       #Minimum size (in pixels) of clumps
@@ -343,13 +343,17 @@ class FellWalker:
       return path,pathv,flat,flatv
 
 
-   def run(self, data, verbose=False):
+   def run(self, data, flat_verification=True, verbose=False):
       data = copy.deepcopy(data)
 
       # Set the RMS, or automatically find an estimate for it
       if not self.par.has_key('RMS'):
-         rms = self.estimate_rms(data)
-         self.par['RMS'] = rms
+      	if verbose: log.info('Estimating RMS')
+      	rms = self.estimate_rms(data)
+      	self.par['RMS'] = rms
+      else:
+      	if verbose: log.info('Setting predefined RMS')
+      	rms = self.par['RMS']
 
       """
       Fill the supplied caa array with -1 for all pixels which are below the
@@ -409,7 +413,11 @@ class FellWalker:
                "sea level". Walks which start at a higher altitude are used in their entirety.
                """
                path,pathv=self.walkup(pos,path,pathv,data,caa)
-               path,pathv,flat,flatv=self.verify_flat(path,pathv,caa,flatSlope,seaLevel)
+               if flat_verification:
+						path,pathv,flat,flatv=self.verify_flat(path,pathv,caa,flatSlope,seaLevel)
+						if flat:
+							for pos in flat:
+								caa[pos]=-1
 
                """
                We now assign the clump index found above to all the pixels visited on
@@ -417,13 +425,6 @@ class FellWalker:
                which is set unusable (-1). We ignore walks that were entirely on the
                coastal plain (indicated by a value of -2 for clump_index).
                """
-
-               #if not empty
-               if flat:
-                  #set pixels as unusable
-                  for pos in flat:
-                     caa[pos]=-1
-
                #if after that, path is empty then continue
                if not path:
                   continue
@@ -523,4 +524,6 @@ class FellWalker:
             clump[_caa[pos]].append(pos)
          del caa
          caa = _caa
-      return (caa,clump,ppeaks)
+
+      #store results
+      return (caa, clump, ppeaks, rms)
